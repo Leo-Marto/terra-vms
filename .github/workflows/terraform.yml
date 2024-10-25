@@ -28,11 +28,12 @@ jobs:
     - name: Checkout
       uses: actions/checkout@v4
 
-    # Install the latest version of Terraform CLI and configure the Terraform CLI configuration file with a Terraform Cloud user API token
-    - name: Setup Terraform
+    - name: Set up Terraform
       uses: hashicorp/setup-terraform@v1
       with:
-        terraform_version: 1.4.0 
+        terraform_version: 1.5.0  # Cambia a la versión que necesitas
+      env:
+        TF_TOKEN_app_terraform_io: ${{ secrets.TERRAFORM_TOKEN }}
 
 
     # Login terraform.
