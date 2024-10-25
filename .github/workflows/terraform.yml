@@ -36,11 +36,6 @@ jobs:
         TF_TOKEN_app_terraform_io: ${{ secrets.TERRAFORM_TOKEN }}
 
 
-    # Login terraform.
-    - name: Terraform login
-      run: terraform login
-
-
     # Initialize a new or existing Terraform working directory by creating initial files, loading any remote state, downloading modules, etc.
     - name: Terraform Init
       run: terraform init
