@@ -1,8 +1,7 @@
 # crear el grupo de recursos
 resource "azurerm_resource_group" "reto1" {
-    count = var.creartodo
-    name = var.resource_group_name
-    location = var.location
+  name = var.resource_group_name
+  location = var.location
     
 }
 
