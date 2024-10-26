@@ -33,3 +33,7 @@ variable "crear" {
     description = "Nombre de la VM para la DB de psotgreSQL"
     type = string
 }
+variable "creartodo" {
+    description = "Nombre de la VM para la DB de psotgreSQL"
+    type = string
+}
