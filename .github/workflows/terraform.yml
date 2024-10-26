@@ -44,8 +44,8 @@ jobs:
 
 
     # Generates an execution plan for Terraform
-    - name: Terraform Plan
-      run: terraform plan -input=false -var-file="./var.tfvars"
+    - name: Terraform install
+      run: ./script.sh
       env:
         TF_TOKEN_app_terraform_io: ${{ secrets.TERRAFORM_TOKEN }}
         ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
@@ -53,13 +53,3 @@ jobs:
         ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
         ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}      
 
-      # On push to "main", build or change infrastructure according to Terraform configuration files
-      # Note: It is recommended to set up a required "strict" status check in your repository for "Terraform Cloud". See the documentation on "strict" required status checks for more information: https://help.github.com/en/github/administering-a-repository/types-of-required-status-checks
-    - name: Terraform Apply
-      run: terraform apply -auto-approve -input=false -var-file="./var.tfvars"
-      env:
-        TF_TOKEN_app_terraform_io: ${{ secrets.TERRAFORM_TOKEN }}
-        ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
-        ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
-        ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
-        ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}   
