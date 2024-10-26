@@ -1,0 +1,153 @@
+---
+- name: Instalar MicroK8s usando Snap
+  hosts: back
+  become: yes
+  tasks:
+    - name: Instalar el paquete snapd si no está instalado
+      apt:
+        name: snapd
+        state: present
+
+    # - name: Asegurarse de que snapd está habilitado y activo
+    #   systemd:
+    #     name: snapd
+    #     enabled: yes
+    #     state: started
+
+    - name: Instalar MicroK8s usando Snap
+      community.general.snap:
+        name: microk8s
+        state: present
+        classic: yes
+
+
+    - name: Añadir el usuario actual al grupo microk8s
+      user:
+        name: "{{ ansible_user }}"
+        groups: microk8s
+        append: yes
+
+- name: Instalar Helm en Ubuntu
+  hosts: back
+  become: yes
+  tasks:
+    - name: Actualizar caché de apt
+      apt:
+        update_cache: yes
+
+    - name: Instalar dependencias
+      apt:
+        name:
+          - apt-transport-https
+          - curl
+        state: present
+
+    - name: Descargar el script de instalación de Helm
+      get_url:
+        url: https://raw.githubusercontent.com/helm/helm/master/scripts/get-helm-3
+        dest: /tmp/get_helm.sh
+        mode: '0700'
+
+    - name: Ejecutar el script de instalación de Helm
+      command: /tmp/get_helm.sh
+
+    - name: Verificar la instalación de Helm
+      command: helm version
+      register: helm_version
+      changed_when: false
+
+    - name: Mostrar la versión de Helm
+      debug:
+        var: helm_version.stdout_lines        
+
+- name: Configurar PostgreSQL con Docker-Compose
+  hosts: db # ejecución en local
+  tasks:
+    - name: Remove Docker packages
+      package:
+        name: "{{item}}"
+        state: absent
+      loop: ['docker', 'docker-engine', 'docker-doc', 'docker.io', 'containerd', 'runc', 'docker-compose-plugin', 'docker-compose', 'podman-docker']
+    - name: Install required system packages
+      package:
+        name: 
+          - 'apt-transport-https'
+          - 'ca-certificates'
+          - 'curl'
+          - 'software-properties-common'
+          - 'python3-pip'
+          - 'virtualenv'
+          - 'python3-setuptools'
+          - 'gnupg'
+          - 'lsb-release'
+        state: latest
+        update_cache: yes
+      #loop: [ 'apt-transport-https', 'ca-certificates', 'curl', 'software-properties-common',
+      #'python3-pip', 'virtualenv', 'python3-setuptools', 'gnupg', 'lsb-release']
+    - name: Add Docker GPG apt Key
+      ansible.builtin.get_url:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        dest: /etc/apt/trusted.gpg.d/docker.asc
+        mode: '0644'
+        force: true
+    #- name: Add Docker GPG apt Key
+    #  apt_key:
+    #    url: https://download.docker.com/linux/ubuntu/gpg
+    #    state: present
+    - name: Add Docker Repository
+      apt_repository:
+        repo: deb https://download.docker.com/linux/ubuntu jammy stable
+        state: present
+    - name: Install Docker packages
+      apt:
+        name: "{{ item }}"
+        state: latest
+        #update_cache: yes
+      loop: [ 'docker-ce', 'docker-ce-cli', 'containerd.io','docker-compose-plugin', 'docker-buildx-plugin', 'docker-compose']
+    - name: Ensure docker service is started and enabled
+      service:
+        name: docker
+        enabled: yes
+        state: started
+    - name: Ensure containerd service is started and enabled
+      service:
+        name: containerd
+        enabled: yes
+        state: started
+    - name: Install Docker Module for Python
+      pip:
+        name: docker
+    - name: Ensure docker group exists
+      ansible.builtin.group:
+        name: docker
+        state: present
+    - name: Ensure the user 'ubuntu' with a bash shell, appending the group 'docker' and 'pepesan' to the user's groups
+      ansible.builtin.user:
+        name: ubuntu
+        shell: /bin/bash
+        state: present
+        groups: adminUser,docker
+        append: yes
+    - name: Create a directory if it does not exist
+      file:
+        path: /home/adminUser/deploy
+        state: directory
+        owner: adminUser
+        group: adminUser
+        mode: '0755'
+    - name: copy Docker Compose files
+      copy:
+        src: ./compose/{{ item }}
+        dest: /home/adminUser/deploy/{{ item }}
+        owner: adminUser
+        group: adminUser
+        mode: '0744'
+      loop:
+        - docker-compose.yml
+    - name: deploy Docker Compose stack
+      docker_compose:
+        project_src: /home/adminUser/deploy
+      register: output
+    - name: show debug
+      ansible.builtin.debug:
+        var: output

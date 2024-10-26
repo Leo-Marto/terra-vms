@@ -1,7 +1,7 @@
 # crear el grupo de recursos
 resource "azurerm_resource_group" "reto1" {
-  name = var.resource_group_name
-  location = var.location
+    name = var.resource_group_name
+    location = var.location
     
 }
 
@@ -29,46 +29,38 @@ resource "tls_private_key" "keysvm1" {
   
 }
 
-  resource "local_file" "private_key" {
-    content  = tls_private_key.keysvm1.private_key_openssh
-    filename = "${path.module}/ssh_${var.resource_group_name}_key"
-  }
+resource "local_file" "private_key" {
+  content  = tls_private_key.keysvm1.private_key_openssh
+  filename = "${path.module}/ssh_${var.resource_group_name}_key"
+}
 
 data "azurerm_client_config" "info" { 
 }
 
-#  resource "azurerm_key_vault" "keyvault1" {
-#    name = "key${random_string.random_suffix.result}${var.resource_group_name}vault"
-#    resource_group_name = azurerm_resource_group.reto1.name
-#    location = azurerm_resource_group.reto1.location
-#    sku_name = "standard"
-#    tenant_id = data.azurerm_client_config.info.tenant_id
-#    access_policy {
-#      tenant_id = data.azurerm_client_config.info.tenant_id
-#      object_id = data.azurerm_client_config.info.object_id
-#      secret_permissions = [ "Get", "List", "Set"]
-#    }
-#    access_policy {
-#      tenant_id = "d2cf35a9-33d9-4e5c-8d09-ffdb4b833195"
-#      object_id = "5a97879f-e389-45d3-b0ba-e1ea2e5212ab"
-#      secret_permissions = [ "Get", "List", "Set"]
-#    }
+resource "azurerm_key_vault" "keyvault1" {
+  name = "key${random_string.random_suffix.result}${var.resource_group_name}vault"
+  resource_group_name = azurerm_resource_group.reto1.name
+  location = azurerm_resource_group.reto1.location
+  sku_name = "standard"
+  tenant_id = data.azurerm_client_config.info.tenant_id
+  access_policy {
+    tenant_id = data.azurerm_client_config.info.tenant_id
+    object_id = data.azurerm_client_config.info.object_id
+    secret_permissions = ["Get", "List", "Set", "Delete", "Purge"]
+  }
+  }
+resource "azurerm_key_vault_secret" "pass_secret" {
+  name = "passvm"
+  value = random_password.name.result
+  key_vault_id = azurerm_key_vault.keyvault1.id
    
-#    }
-
-
-# resource "azurerm_key_vault_secret" "pass_secret" {
-#   name = "passvm"
-#   value = random_password.name.result
-#   key_vault_id = azurerm_key_vault.keyvault1.id
+}
+resource "azurerm_key_vault_secret" "pass_public_key" {
+  name = "privatekey"
+  value = tls_private_key.keysvm1.private_key_openssh 
+  key_vault_id = azurerm_key_vault.keyvault1.id
    
-# }
-#   resource "azurerm_key_vault_secret" "pass_public_key" {
-#     name = "privatekey"
-#     value = tls_private_key.keysvm1.private_key_openssh 
-#     key_vault_id = azurerm_key_vault.keyvault1.id
-   
-#   }
+}
 
 
 
@@ -162,114 +154,177 @@ resource "azurerm_network_interface_security_group_association" "nisgreto1" {
 }
   
 
-module "vm" {
-  count = var.crear
-  source              = "./modules/vm"
-  name = "${var.vm1}${count.index}"
-  resource_group_name = azurerm_resource_group.reto1.name
-  location            = azurerm_resource_group.reto1.location
-  publickey = var.publickey
-  passvm = random_password.name.result
-  id_interface = azurerm_network_interface.nireto1.id
+
+resource "azurerm_virtual_machine" "reto1vm" {
+    name = "${var.resource_group_name}-VM"
+    location = azurerm_resource_group.reto1.location
+    resource_group_name = azurerm_resource_group.reto1.name
+    network_interface_ids = [azurerm_network_interface.nireto1.id]
+    vm_size = "Standard_DS1_v2"
+
+
+    storage_os_disk {
+      name = "myOSdisk"
+      caching = "ReadWrite"
+      create_option = "FromImage"
+      managed_disk_type = "Standard_LRS"
+      disk_size_gb = "120"
+    }
+
+    os_profile {
+      computer_name = "backend-kube"
+      admin_username = "adminUser"
+      admin_password = random_password.name.result
+        
+    }
+    
+    os_profile_linux_config {
+        
+      ssh_keys {
+        path = "/home/adminUser/.ssh/authorized_keys"
+        key_data = tls_private_key.keysvm1.public_key_openssh
+      }
+      disable_password_authentication = false
+    }
+
+    storage_image_reference {
+        publisher = "canonical"
+        offer     = "0001-com-ubuntu-server-jammy"
+        sku       = "22_04-lts-gen2"
+        version   = "latest"
+    }
+
+  
 }
 
-module "vm2" {
-  count = var.crear
-  source              = "./modules/vm"
-  name = "${var.vm2}${count.index}"
-  resource_group_name = azurerm_resource_group.reto1.name
-  location            = azurerm_resource_group.reto1.location
-  publickey = var.publickey
-  passvm = random_password.name.result
-  id_interface = azurerm_network_interface.ni2reto1.id
+resource "azurerm_virtual_machine" "reto1vm2" {
+    name = "${var.resource_group_name}-VM2"
+    location = azurerm_resource_group.reto1.location
+    resource_group_name = azurerm_resource_group.reto1.name
+    network_interface_ids = [azurerm_network_interface.ni2reto1.id]
+    vm_size = "Standard_DS1_v2"
+
+
+    storage_os_disk {
+      name = "myOSdisk2"
+      caching = "ReadWrite"
+      create_option = "FromImage"
+      managed_disk_type = "Standard_LRS"
+      disk_size_gb = "120"
+    }
+
+    os_profile {
+      computer_name = "postgresql"
+      admin_username = "adminUser"
+      admin_password = random_password.name.result
+        
+    }
+    
+    os_profile_linux_config {
+        
+      ssh_keys {
+        path = "/home/adminUser/.ssh/authorized_keys"
+        key_data = tls_private_key.keysvm1.public_key_openssh
+      }
+      disable_password_authentication = false
+    }
+
+    storage_image_reference {
+        publisher = "canonical"
+        offer     = "0001-com-ubuntu-server-jammy"
+        sku       = "22_04-lts-gen2"
+        version   = "latest"
+    }
+
+  
 }
 
 
-# # Crear un workspace de Log Analytics
-# resource "azurerm_log_analytics_workspace" "law" {
-#   name                = "${var.resource_group_name}-law"
-#   location            = azurerm_resource_group.reto1.location
-#   resource_group_name = azurerm_resource_group.reto1.name
-#   sku                 = "PerGB2018"
-#   retention_in_days   = 30
-# }
+# Crear un workspace de Log Analytics
+resource "azurerm_log_analytics_workspace" "law" {
+  name                = "${var.resource_group_name}-law"
+  location            = azurerm_resource_group.reto1.location
+  resource_group_name = azurerm_resource_group.reto1.name
+  sku                 = "PerGB2018"
+  retention_in_days   = 30
+}
 
-# # Habilitar la recopilación de métricas para las VMs
-# resource "azurerm_virtual_machine_extension" "vm_extension" {
-#   name                       = "OmsAgentForLinux"
-#   virtual_machine_id         = mo
-#   publisher                  = "Microsoft.EnterpriseCloud.Monitoring"
-#   type                       = "OmsAgentForLinux"
-#   type_handler_version       = "1.13"
-#   auto_upgrade_minor_version = true
+# Habilitar la recopilación de métricas para las VMs
+resource "azurerm_virtual_machine_extension" "vm_extension" {
+  name                       = "OmsAgentForLinux"
+  virtual_machine_id         = azurerm_virtual_machine.reto1vm.id
+  publisher                  = "Microsoft.EnterpriseCloud.Monitoring"
+  type                       = "OmsAgentForLinux"
+  type_handler_version       = "1.13"
+  auto_upgrade_minor_version = true
 
-#   settings = <<SETTINGS
-#     {
-#       "workspaceId": "${azurerm_log_analytics_workspace.law.workspace_id}"
-#     }
-#   SETTINGS
+  settings = <<SETTINGS
+    {
+      "workspaceId": "${azurerm_log_analytics_workspace.law.workspace_id}"
+    }
+  SETTINGS
 
-#   protected_settings = <<PROTECTED_SETTINGS
-#     {
-#       "workspaceKey": "${azurerm_log_analytics_workspace.law.primary_shared_key}"
-#     }
-#   PROTECTED_SETTINGS
-# }
+  protected_settings = <<PROTECTED_SETTINGS
+    {
+      "workspaceKey": "${azurerm_log_analytics_workspace.law.primary_shared_key}"
+    }
+  PROTECTED_SETTINGS
+}
 
-# # Repetir para la segunda VM
-# resource "azurerm_virtual_machine_extension" "vm2_extension" {
-#   name                       = "OmsAgentForLinux"
-#   virtual_machine_id         = azurerm_virtual_machine.reto1vm2.id
-#   publisher                  = "Microsoft.EnterpriseCloud.Monitoring"
-#   type                       = "OmsAgentForLinux"
-#   type_handler_version       = "1.13"
-#   auto_upgrade_minor_version = true
+# Repetir para la segunda VM
+resource "azurerm_virtual_machine_extension" "vm2_extension" {
+  name                       = "OmsAgentForLinux"
+  virtual_machine_id         = azurerm_virtual_machine.reto1vm2.id
+  publisher                  = "Microsoft.EnterpriseCloud.Monitoring"
+  type                       = "OmsAgentForLinux"
+  type_handler_version       = "1.13"
+  auto_upgrade_minor_version = true
 
-#   settings = <<SETTINGS
-#     {
-#       "workspaceId": "${azurerm_log_analytics_workspace.law.workspace_id}"
-#     }
-#   SETTINGS
+  settings = <<SETTINGS
+    {
+      "workspaceId": "${azurerm_log_analytics_workspace.law.workspace_id}"
+    }
+  SETTINGS
 
-#   protected_settings = <<PROTECTED_SETTINGS
-#     {
-#       "workspaceKey": "${azurerm_log_analytics_workspace.law.primary_shared_key}"
-#     }
-#   PROTECTED_SETTINGS
-# }
+  protected_settings = <<PROTECTED_SETTINGS
+    {
+      "workspaceKey": "${azurerm_log_analytics_workspace.law.primary_shared_key}"
+    }
+  PROTECTED_SETTINGS
+}
 
-# # Crear una regla de alerta
-# resource "azurerm_monitor_action_group" "main" {
-#   name                = "${var.resource_group_name}-actiongroup"
-#   resource_group_name = azurerm_resource_group.reto1.name
-#   short_name          = "${var.resource_group_name}act"
+# Crear una regla de alerta
+resource "azurerm_monitor_action_group" "main" {
+  name                = "${var.resource_group_name}-actiongroup"
+  resource_group_name = azurerm_resource_group.reto1.name
+  short_name          = "${var.resource_group_name}act"
 
-#   email_receiver {
-#     name          = "sendtoadmin"
-#     email_address = "raulmarto-testeo@hotmail.com"
-#   }
-# }
+  email_receiver {
+    name          = "sendtoadmin"
+    email_address = "raulmarto-testeo@hotmail.com"
+  }
+}
 
-# resource "azurerm_monitor_metric_alert" "alert1" {
-#   name                = "${var.resource_group_name}-metricalert"
-#   resource_group_name = azurerm_resource_group.reto1.name
-#   scopes              = [azurerm_virtual_machine.reto1vm.id, azurerm_virtual_machine.reto1vm2.id]
+resource "azurerm_monitor_metric_alert" "alert1" {
+  name                = "${var.resource_group_name}-metricalert"
+  resource_group_name = azurerm_resource_group.reto1.name
+  scopes              = [azurerm_virtual_machine.reto1vm.id, azurerm_virtual_machine.reto1vm2.id]
 
-#   criteria {
-#     metric_namespace = "Microsoft.Compute/virtualMachines"
-#     metric_name      = "Percentage CPU"
-#     aggregation      = "Average"
-#     operator         = "GreaterThan"
-#     threshold        = 80
-#    }
+  criteria {
+    metric_namespace = "Microsoft.Compute/virtualMachines"
+    metric_name      = "Percentage CPU"
+    aggregation      = "Average"
+    operator         = "GreaterThan"
+    threshold        = 80
+   }
 
-#   action {
-#     action_group_id = azurerm_monitor_action_group.main.id
-#   }
+  action {
+    action_group_id = azurerm_monitor_action_group.main.id
+  }
 
-#   target_resource_type = "Microsoft.Compute/virtualMachines"
-#   target_resource_location = azurerm_resource_group.reto1.location
-# }
+  target_resource_type = "Microsoft.Compute/virtualMachines"
+  target_resource_location = azurerm_resource_group.reto1.location
+}
 
 
 
