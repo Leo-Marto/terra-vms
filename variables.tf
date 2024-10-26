@@ -19,17 +19,3 @@ variable "vm2" {
     description = "Nombre de la VM para la DB de psotgreSQL"
     type = string
 }
-
-variable "publickey" {
-    description = "Nombre de la VM para la DB de psotgreSQL"
-    type = string
-}
-
-variable "passvm" {
-    description = "Nombre de la VM para la DB de psotgreSQL"
-    type = string
-}
-variable "crear" {
-    description = "Nombre de la VM para la DB de psotgreSQL"
-    type = string
-}
