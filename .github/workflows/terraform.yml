@@ -35,13 +35,6 @@ jobs:
       with:
         terraform_version: 1.5.0 
         TF_TOKEN_app_terraform_io: ${{ secrets.TERRAFORM_TOKEN }}
-    # Login en Azure
-    - name: Azure login
-      uses: azure/login@v2
-      with:
-        client-id: ${{ secrets.AZURE_CLIENT_ID }}
-        tenant-id: ${{ secrets.AZURE_TENANT_ID }}
-        subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
    # Ejecuto Script de automatizacion
     - name: Terraform install
