@@ -54,7 +54,9 @@ jobs:
 
     - name: Ejecuta si el commit es Destroy
       if: contains(env.commit_message, 'destroy')
-      run: terraform apply -auto-approve -input=false -var-file="./vars.tfvars" -destroy -lock=false
+      run: |
+          terraform init
+          terraform apply -auto-approve -input=false -var-file="./vars.tfvars" -destroy -lock=false
       env:
         TF_TOKEN_app_terraform_io: ${{ secrets.TERRAFORM_TOKEN }}
         ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
