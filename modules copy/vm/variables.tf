@@ -9,16 +9,12 @@ variable "location" {
     type = string  
 }
 
-variable "vm1" {
-    description = "Nombre de la VM para el back"
-    type = string
-     
+variable "name" {
+    description = "Nombre de la VM"
+    type = string  
 }
 
-variable "vm2" {
-    description = "Nombre de la VM para la DB de psotgreSQL"
-    type = string
-}
+
 
 variable "publickey" {
     description = "Nombre de la VM para la DB de psotgreSQL"
@@ -29,7 +25,8 @@ variable "passvm" {
     description = "Nombre de la VM para la DB de psotgreSQL"
     type = string
 }
-variable "crear" {
-    description = "Nombre de la VM para la DB de psotgreSQL"
+
+variable "id_interface" {
+    description = "ID de la interface de red a usar"
     type = string
 }
