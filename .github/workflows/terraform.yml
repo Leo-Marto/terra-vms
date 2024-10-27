@@ -42,7 +42,7 @@ jobs:
         TF_TOKEN_app_terraform_io: ${{ secrets.TERRAFORM_TOKEN }}
 
 
-    - name: Ejecuta si el commit es Deploy
+    - name: Ejecuta si el commit es deploy
       if: contains(env.commit_message, 'deploy')
       run: ./script.sh
       env:
@@ -52,7 +52,7 @@ jobs:
         ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
         ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}      
 
-    - name: Ejecuta si el commit es Destroy
+    - name: Ejecuta si el commit es destroy
       if: contains(env.commit_message, 'destroy')
       run: |
           terraform init
