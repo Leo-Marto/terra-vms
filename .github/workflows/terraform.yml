@@ -29,6 +29,11 @@ jobs:
     # Checkout del repositorio
     - name: Checkout
       uses: actions/checkout@v4
+    - name: Ultimo commit
+      id: get_commit_message
+      run: |
+        commit_message=$(git log -1 --pretty=%B)
+        echo "commit_message=$commit_message" >> $GITHUB_ENV      
 
     - name: Set up Terraform
       uses: hashicorp/setup-terraform@v1
