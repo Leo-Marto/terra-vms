@@ -36,8 +36,9 @@ jobs:
         terraform_version: 1.5.0 
         TF_TOKEN_app_terraform_io: ${{ secrets.TERRAFORM_TOKEN }}
 
-   # Ejecuto Script de automatizacion
-    - name: Terraform install
+
+    - name: Ejecuta si el commit es Deploy
+      if: contains(env.commit_message, 'deploy')
       run: ./script.sh
       env:
         TF_TOKEN_app_terraform_io: ${{ secrets.TERRAFORM_TOKEN }}
@@ -46,3 +47,14 @@ jobs:
         ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
         ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}      
 
+    - name: Ejecuta si el commit es Destroy
+      if: contains(env.commit_message, 'destroy')
+      run: terraform apply -auto-approve -input=false -var-file="./vars.tfvars" -destroy -lock=false
+      env:
+        TF_TOKEN_app_terraform_io: ${{ secrets.TERRAFORM_TOKEN }}
+        ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+        ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+        ARM_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+        ARM_SUBSCRIPTION_ID: ${{ secrets.AZURE_SUBSCRIPTION_ID }}   
+
+  
