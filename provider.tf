@@ -28,13 +28,12 @@ provider "azurerm" {
 }
 
 
-terraform { 
-  cloud { 
-    
-    organization = "Leomarto" 
+terraform {
+  backend "remote" {
+    organization = "Leomarto"
 
-    workspaces { 
-      name = "leo1" 
-    } 
-  } 
+    workspaces {
+      name = "git-vms"
+    }
+  }
 }
