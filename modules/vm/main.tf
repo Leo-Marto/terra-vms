@@ -1,4 +1,4 @@
-resource "azurerm_virtual_machine" "reto1vm" {
+resource "azurerm_virtual_machine" "gitvm1vm" {
     name = "${var.name}-VM"
     location = var.location
     resource_group_name = var.resource_group_name
