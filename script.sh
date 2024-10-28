@@ -63,7 +63,7 @@
 # echo 'vm2="'"$DB_VM"'"' >> var.tfvars
 # cat var.tfvars
 
-terraform init -reconfigure
+terraform init
 
 if [ $? -eq 0 ]; then
   echo ""
