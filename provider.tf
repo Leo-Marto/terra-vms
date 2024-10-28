@@ -34,7 +34,7 @@ terraform {
     organization = "Leomarto" 
 
     workspaces { 
-      name = "leo3" 
+      name = "leo1" 
     } 
   } 
 }
