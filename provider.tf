@@ -16,13 +16,7 @@ terraform {
     }
   }
 
-  backend "remote" {
-    organization = "Leomarto"
 
-    workspaces {
-      name = "git-vms"
-    }
-  }
 }
 
 provider "azurerm" {
@@ -32,4 +26,15 @@ provider "azurerm" {
     }
   }
   subscription_id = "b5aaf0c5-9029-46d7-84e6-8c62506866c2"
+}
+
+terraform { 
+  cloud { 
+    
+    organization = "Leomarto" 
+
+    workspaces { 
+      name = "leo1" 
+    } 
+  } 
 }
