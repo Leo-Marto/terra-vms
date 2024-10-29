@@ -46,6 +46,8 @@ jobs:
       if: contains(env.commit_message, 'deploy')
       run: ./script.sh
       env:
+        TF_VAR_passvm: ${{ secrets.PASSVM }}
+        TF_VAR_publickey: ${{ secrets.PUBLICKEY }}
         TF_TOKEN_app_terraform_io: ${{ secrets.TERRAFORM_TOKEN }}
         ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
         ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
@@ -58,6 +60,8 @@ jobs:
           terraform init
           terraform apply -auto-approve -input=false -var-file="./var.tfvars" -destroy -lock=false
       env:
+        TF_VAR_passvm: ${{ secrets.PASSVM }}
+        TF_VAR_publickey: ${{ secrets.PUBLICKEY }}        
         TF_TOKEN_app_terraform_io: ${{ secrets.TERRAFORM_TOKEN }}
         ARM_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
         ARM_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
